@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>PirFilms</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="css/style.css">
 </head>
 <body class="dark-theme">
 
@@ -22,6 +22,7 @@
         </div>
         
         <button id="themeToggle" aria-label="Сменить тему">+</button>
+
         <label class="lang-toggle">
           <input type="checkbox" id="langToggle">
           <span class="slider"></span>
@@ -31,7 +32,12 @@
           </span>
         </label>
     
-        <button id="hamburger" aria-label="Открыть фильтры">&#9776;</button>
+        <!-- Бургер-меню с 3 span для палочек -->
+        <button id="hamburger" aria-label="Открыть фильтры">
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
       </div>
     </header>
 
@@ -55,12 +61,11 @@
 
     <footer class="footer">
       <p>© <span id="currentYear"></span> PirFilms. Все права защищены.</p>
-      <p>Пака здесь нечего нет :(</p>
+      <p>Пока здесь нечего нет :(</p>
     </footer>
 
   </div> 
 
-  <script src="script.js"></script>
+  <script src="js/script.js"></script>
 </body>
 </html>
-
