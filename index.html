@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PirFilms</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="dark-theme">
+
+  <div class="scroll-wrapper">
+
+    <header class="header">
+      <div class="logo">PirFilms</div>
+      <nav class="nav">
+        <a href="#">Главная</a>
+      </nav>
+
+      <div class="header-buttons">
+        <div class="header-search">
+          <input type="text" id="movieSearch" placeholder="Поиск фильмов..." aria-label="Поиск фильмов">
+        </div>
+        
+        <button id="themeToggle" aria-label="Сменить тему">+</button>
+        <label class="lang-toggle">
+          <input type="checkbox" id="langToggle">
+          <span class="slider"></span>
+          <span class="lang-labels">
+            <span class="ru">RU</span>
+            <span class="en">EN</span>
+          </span>
+        </label>
+    
+        <button id="hamburger" aria-label="Открыть фильтры">&#9776;</button>
+      </div>
+    </header>
+
+    <div id="filterToggle" class="filter-toggle">
+      <div class="vertical-text">
+        <span>Ф</span><span>и</span><span>л</span><span>ь</span><span>т</span><span>р</span><span>ы</span>
+      </div>
+    </div>
+
+    <aside class="sidebar" id="sidebar">
+      <h3 class="filters-title">Фильтры</h3>
+    </aside>
+
+    <div id="overlay"></div>
+
+    <main class="main-content">
+      <h2 class="movies-title">Фильмы</h2>
+      <div id="pagination" class="pagination"></div>
+      <div id="movieContainer" class="carousel"></div>
+    </main>
+
+    <footer class="footer">
+      <p>© <span id="currentYear"></span> PirFilms. Все права защищены.</p>
+      <p>Пака здесь нечего нет :(</p>
+    </footer>
+
+  </div> 
+
+  <script src="js/script.js"></script>
+</body>
+</html>
