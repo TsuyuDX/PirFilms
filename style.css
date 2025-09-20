@@ -540,3 +540,172 @@ body.light-theme::after {
 @media (max-width: 480px) {
   .card { width: 150px; }
 }
+
+/* Адаптивный хедер для мобильных */
+@media (max-width: 768px) {
+  header.header {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    gap: 10px;
+  }
+
+  .nav {
+    display: none; /* Скрываем навигацию */
+  }
+
+  .left-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .logo {
+    font-size: 20px;
+  }
+
+  .lang-toggle {
+    order: 1;
+  }
+
+  /* Бургер-меню */
+  #hamburger {
+  display: flex;
+  order: 2;
+  background: rgba(255, 255, 255, 0.2);
+  width: 40px;
+  height: 40px;
+  flex-direction: column;
+  justify-content: space-around; /* распределяем палочки равномерно */
+  align-items: center;
+  border: none;
+  cursor: pointer;
+  padding: 4px 0; /* немного внутреннего отступа */
+  border-radius: 6px;
+  transition: background 0.3s ease;
+}
+
+#hamburger span {
+  display: block;
+  width: 28px;
+  height: 2px; /* фиксированная толщина */
+  background: rgba(0, 0, 0, 0.8);
+  border-radius: 2px;
+  transition: transform 0.3s ease, opacity 0.3s ease, background 0.3s ease;
+}
+
+
+#hamburger.active span:nth-child(1) {
+  transform: rotate(45deg) translate(4px, 4px);
+}
+#hamburger.active span:nth-child(2) {
+  opacity: 0;
+}
+#hamburger.active span:nth-child(3) {
+  transform: rotate(-45deg) translate(4px, -4px);
+}
+
+#hamburger:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+#hamburger.active:hover {
+  background: rgba(255, 255, 255, 0.35);
+}
+
+
+  /* Поиск по центру */
+  .header-search {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    order: 3;
+  }
+
+  .header-search input {
+    width: 100%;
+    max-width: 250px;
+    font-size: 14px;
+    text-align: center;
+    padding: 6px 10px;
+  }
+
+  /* Кнопка смены темы */
+  #themeToggle {
+    order: 4;
+    width: 40px;
+    height: 40px;
+    font-size: 20px;
+  }
+
+  /* Боковая панель фильтров */
+  .sidebar {
+    width: 200px;
+    padding: 15px;
+    border-radius: 0 10px 10px 0;
+  }
+
+  .filter-toggle {
+    display: none; /* Скрываем toggle фильтров на мобильных */
+  }
+
+  /* Мобильная карусель */
+  .carousel {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    padding: 15px;
+    overflow-x: hidden;
+  }
+
+  .card {
+    width: 90%;
+    max-width: 350px;
+    flex: 0 0 auto;
+  }
+
+  .movies-title {
+    text-align: center;
+    font-size: 24px;
+    margin: 20px 0;
+  }
+}
+
+/* Очень маленькие экраны */
+@media (max-width: 480px) {
+  header.header {
+    padding: 8px 10px;
+  }
+
+  .header-search input {
+    font-size: 12px;
+    padding: 4px 8px;
+    max-width: 200px;
+  }
+
+  #themeToggle {
+    width: 35px;
+    height: 35px;
+    font-size: 18px;
+  }
+
+  #hamburger {
+    width: 45px;
+    height: 45px;
+    gap: 4px;
+  }
+
+  .carousel {
+    gap: 15px;
+  }
+
+  .card {
+    width: 95%;
+    max-width: 300px;
+  }
+
+  .movies-title {
+    font-size: 20px;
+  }
+}
