@@ -4,25 +4,25 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>PirFilms</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="Css/style.css">
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self' https://api.themoviedb.org https://image.tmdb.org; style-src 'self' 'unsafe-inline';" />
+  <meta http-equiv="Referrer-Policy" content="strict-origin" />
+  <meta http-equiv="X-Content-Type-Options" content="nosniff" />
 </head>
 <body class="dark-theme">
-
   <div class="scroll-wrapper">
-
     <header class="header">
       <div class="logo">PirFilms</div>
       <nav class="nav">
         <a href="#">Главная</a>
       </nav>
-
       <div class="header-buttons">
         <div class="header-search">
-          <input type="text" id="movieSearch" placeholder="Поиск фильмов..." aria-label="Поиск фильмов">
+          <input type="text" id="movieSearch" placeholder="Поиск фильмов..." aria-label="Поиск фильмов" autocomplete="off">
+          <ul id="searchSuggestions" class="suggestions"></ul>
         </div>
-        
-        <button id="themeToggle" aria-label="Сменить тему">+</button>
-
+        <button id="themeToggle" aria-label="Сменить тему" class="theme-toggle">С</button>
         <label class="lang-toggle">
           <input type="checkbox" id="langToggle">
           <span class="slider"></span>
@@ -31,42 +31,44 @@
             <span class="en">EN</span>
           </span>
         </label>
-    
-        <!-- Бургер-меню с 3 span для палочек -->
         <button id="hamburger" aria-label="Открыть фильтры">
-          <span></span>
-          <span></span>
-          <span></span>
+          <span></span><span></span><span></span>
         </button>
       </div>
     </header>
-
     <div id="filterToggle" class="filter-toggle">
       <div class="vertical-text">
         <span>Ф</span><span>и</span><span>л</span><span>ь</span><span>т</span><span>р</span><span>ы</span>
       </div>
     </div>
-
     <aside class="sidebar" id="sidebar">
       <h3 class="filters-title">Фильтры</h3>
     </aside>
-
     <div id="overlay"></div>
-
     <main class="main-content">
       <h2 class="movies-title">Фильмы</h2>
       <div id="pagination" class="pagination"></div>
       <div id="movieContainer" class="carousel"></div>
     </main>
-
+    <div id="movieModal" class="modal hidden">
+      <div class="modal-content">
+        <span id="closeModal" class="close">&times;</span>
+        <div class="modal-body">
+          <img id="modalPoster" src="" alt="Постер фильма" />
+          <div class="modal-info">
+            <h3 id="modalTitle"></h3>
+            <p id="modalRating"></p>
+            <p id="modalOverview"></p>
+            <button id="trailerButton" class="trailer-btn">🎥 Смотреть трейлер</button>
+          </div>
+        </div>
+      </div>
+    </div>
     <footer class="footer">
       <p>© <span id="currentYear"></span> PirFilms. Все права защищены.</p>
       <p>Пока здесь нечего нет :(</p>
     </footer>
-
-  </div> 
-
-  <script src="script.js"></script>
+  </div>
+  <script src="JS/script.js"></script>
 </body>
 </html>
-
