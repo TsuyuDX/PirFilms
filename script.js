@@ -1,16 +1,19 @@
-//Конфиг
+
 const API_KEY = "3053470440ee93f2e4c17285cc4a2687";
 const BASE_URL = "https://api.themoviedb.org/3";
 const IMG_URL = "https://image.tmdb.org/t/p/w500";
 
-//Данные фильтров
-const filtersData = {
-  genreMap: {},
-  countryList: [],
-  yearList: []
+const filtersData = { genreMap: {}, countryList: [], yearList: [] };
+let currentLang = localStorage.getItem("lang") || "ru";
+let currentPage = 1;
+let totalPages = 1;
+let currentQuery = localStorage.getItem("query") || "";
+const selectedFilters = {
+  genre: new Set(JSON.parse(localStorage.getItem("filter_genre") || "[]")),
+  country: new Set(JSON.parse(localStorage.getItem("filter_country") || "[]")),
+  year: new Set(JSON.parse(localStorage.getItem("filter_year") || "[]"))
 };
 
-//Переводы
 const translations = {
   ru: {
     filters: "Фильтры",
@@ -20,10 +23,11 @@ const translations = {
     genre: "Жанры",
     country: "Страны",
     year: "Год",
-    search: "Поиск...",
+    search: "Поиск фильмов...",
     prev: "Назад",
     next: "Вперёд",
-    page: "Страница"
+    page: "Страница",
+    trailer: "Смотреть трейлер"
   },
   en: {
     filters: "Filters",
@@ -33,24 +37,14 @@ const translations = {
     genre: "Genres",
     country: "Countries",
     year: "Year",
-    search: "Search...",
+    search: "Search movies...",
     prev: "Prev",
     next: "Next",
-    page: "Page"
+    page: "Page",
+    trailer: "Watch trailer"
   }
 };
 
-let currentLang = "ru";
-let currentPage = 1;
-let totalPages = 1;
-let currentQuery = "";
-const selectedFilters = {
-  genre: new Set(),
-  country: new Set(),
-  year: new Set()
-};
-
-//DOM элементы
 const movieContainer = document.getElementById("movieContainer");
 const sidebar = document.getElementById("sidebar");
 const mainContent = document.querySelector(".main-content");
@@ -62,7 +56,11 @@ const hamburger = document.getElementById("hamburger");
 const movieSearchInput = document.getElementById("movieSearch");
 const pagination = document.getElementById("pagination");
 
-//Дебаунс
+const suggestionsBox = document.createElement("ul");
+suggestionsBox.className = "suggestions";
+movieSearchInput.parentNode.appendChild(suggestionsBox);
+movieSearchInput.value = currentQuery;
+
 function debounce(fn, delay = 300) {
   let timeout;
   return (...args) => {
@@ -70,9 +68,9 @@ function debounce(fn, delay = 300) {
     timeout = setTimeout(() => fn(...args), delay);
   };
 }
+
 const debouncedSearch = debounce(fetchMovies, 500);
 
-//Dropdown
 function createDropdown(id, title, options = []) {
   const group = document.createElement("div");
   group.className = "filter-group";
@@ -95,6 +93,7 @@ function createDropdown(id, title, options = []) {
   const labelSpan = document.createElement("span");
   labelSpan.className = "dropdown-label";
   labelSpan.textContent = translations[currentLang].all;
+
   const iconSpan = document.createElement("span");
   iconSpan.className = "dropdown-icon";
 
@@ -123,7 +122,6 @@ function createDropdown(id, title, options = []) {
   footer.appendChild(resetBtn);
   footer.appendChild(applyBtn);
   body.appendChild(footer);
-
   dropdown.appendChild(body);
   group.appendChild(dropdown);
   sidebar.appendChild(group);
@@ -134,6 +132,7 @@ function createDropdown(id, title, options = []) {
 
   resetBtn.addEventListener("click", () => {
     selectedFilters[id].clear();
+    saveFilters();
     optionsContainer.querySelectorAll("input").forEach(cb => (cb.checked = false));
     updateHeader(header, id);
     fetchMovies(1);
@@ -144,6 +143,7 @@ function createDropdown(id, title, options = []) {
     optionsContainer.querySelectorAll("input:checked").forEach(cb => {
       selectedFilters[id].add(cb.value);
     });
+    saveFilters();
     updateHeader(header, id);
     dropdown.classList.remove("open");
     header.setAttribute("aria-expanded", "false");
@@ -161,6 +161,7 @@ function updateDropdownOptions(id, options) {
     const input = document.createElement("input");
     input.type = "checkbox";
     input.value = opt;
+    if (selectedFilters[id].has(opt)) input.checked = true;
     label.appendChild(input);
     label.appendChild(document.createTextNode(` ${opt}`));
     container.appendChild(label);
@@ -183,20 +184,18 @@ function updateHeader(header, id) {
       : Array.from(selectedFilters[id]).join(", ");
 }
 
-//Рендер фильмов
 function renderMovies(movies) {
   movieContainer.innerHTML = "";
-
   if (movies.length === 0) {
     const p = document.createElement("p");
     p.textContent = translations[currentLang].moviesNotFound;
     movieContainer.appendChild(p);
     return;
   }
-
   movies.forEach(movie => {
     const card = document.createElement("div");
     card.className = "card";
+    card.dataset.id = movie.id;
 
     const img = document.createElement("img");
     img.src = movie.img;
@@ -211,23 +210,18 @@ function renderMovies(movies) {
     info.textContent = `${movie.genres.join(", ")}, ${movie.year}`;
     card.appendChild(info);
 
+    card.addEventListener("click", () => openModal(movie.id));
     movieContainer.appendChild(card);
   });
-
   renderPagination();
 }
 
-//Пагинация
 function renderPagination() {
   pagination.innerHTML = "";
-
   const maxButtons = 5;
   let start = Math.max(1, currentPage - 2);
   let end = Math.min(totalPages, start + maxButtons - 1);
-
-  if (end - start < maxButtons - 1) {
-    start = Math.max(1, end - maxButtons + 1);
-  }
+  if (end - start < maxButtons - 1) start = Math.max(1, end - maxButtons + 1);
 
   const prevBtn = document.createElement("button");
   prevBtn.textContent = translations[currentLang].prev;
@@ -250,30 +244,21 @@ function renderPagination() {
   pagination.appendChild(nextBtn);
 }
 
-//API запрос
 async function fetchMovies(page = 1) {
   currentPage = page;
   let url;
-
   if (currentQuery) {
-    url = `${BASE_URL}/search/movie?api_key=${API_KEY}&language=${currentLang}-RU&query=${encodeURIComponent(
-      currentQuery
-    )}&page=${page}`;
+    url = `${BASE_URL}/search/movie?api_key=${API_KEY}&language=${currentLang}-RU&query=${encodeURIComponent(currentQuery)}&page=${page}`;
   } else {
     url = `${BASE_URL}/discover/movie?api_key=${API_KEY}&language=${currentLang}-RU&page=${page}`;
-
     if (selectedFilters.genre.size > 0) {
       const ids = Array.from(selectedFilters.genre)
         .map(g => Object.keys(filtersData.genreMap).find(id => filtersData.genreMap[id] === g))
         .join(",");
       url += `&with_genres=${ids}`;
     }
-    if (selectedFilters.year.size > 0) {
-      url += `&primary_release_year=${Array.from(selectedFilters.year)[0]}`;
-    }
-    if (selectedFilters.country.size > 0) {
-      url += `&region=${Array.from(selectedFilters.country)[0]}`;
-    }
+    if (selectedFilters.year.size > 0) url += `&primary_release_year=${Array.from(selectedFilters.year)[0]}`;
+    if (selectedFilters.country.size > 0) url += `&region=${Array.from(selectedFilters.country)[0]}`;
   }
 
   const res = await fetch(url);
@@ -289,28 +274,53 @@ async function fetchMovies(page = 1) {
   }));
 
   renderMovies(movies);
+  updateSuggestions(movies);
 }
 
-//Язык
+function saveFilters() {
+  localStorage.setItem("filter_genre", JSON.stringify([...selectedFilters.genre]));
+  localStorage.setItem("filter_country", JSON.stringify([...selectedFilters.country]));
+  localStorage.setItem("filter_year", JSON.stringify([...selectedFilters.year]));
+}
+
 function updateLanguage() {
   sidebar.querySelector(".filters-title").textContent = translations[currentLang].filters;
   movieSearchInput.placeholder = translations[currentLang].search;
   renderPagination();
 }
 
+langToggle.checked = currentLang === "en";
 langToggle.addEventListener("change", () => {
   currentLang = langToggle.checked ? "en" : "ru";
+  localStorage.setItem("lang", currentLang);
   updateLanguage();
   fetchMovies(1);
 });
 
-//Темы
 themeBtn.addEventListener("click", () => {
   body.classList.toggle("dark-theme");
   body.classList.toggle("light-theme");
+  if (body.classList.contains("dark-theme")) {
+    filterToggle.style.backgroundColor = "#ffb84d";
+    filterToggle.style.color = "#222";
+  } else {
+    filterToggle.style.backgroundColor = "#ff6600";
+    filterToggle.style.color = "#fff";
+  }
+  localStorage.setItem("theme", body.classList.contains("dark-theme") ? "dark" : "light");
 });
 
-//Хедер анимация
+if (localStorage.getItem("theme") === "light") {
+  body.classList.remove("dark-theme");
+  body.classList.add("light-theme");
+  filterToggle.style.backgroundColor = "#ff6600";
+  filterToggle.style.color = "#fff";
+} else {
+  body.classList.add("dark-theme");
+  filterToggle.style.backgroundColor = "#ffb84d";
+  filterToggle.style.color = "#222";
+}
+
 filterToggle.addEventListener("click", toggleSidebar);
 hamburger.addEventListener("click", toggleSidebar);
 
@@ -318,41 +328,81 @@ function toggleSidebar() {
   const isActive = sidebar.classList.toggle("active");
   mainContent.classList.toggle("shifted", isActive);
   filterToggle.classList.toggle("hidden", isActive);
-
-  //скрываем хедер
-  if (isActive) {
-    body.classList.add("filters-open");
-  } else {
-    body.classList.remove("filters-open");
-  }
+  body.classList.toggle("filters-open", isActive);
 }
 
-//ESC и клик
 document.addEventListener("keydown", e => {
-  if (e.key === "Escape" && sidebar.classList.contains("active")) {
-    sidebar.classList.remove("active");
-    mainContent.classList.remove("shifted");
-    filterToggle.classList.remove("hidden");
-    body.classList.remove("filters-open");
-  }
+  if (e.key === "Escape" && sidebar.classList.contains("active")) toggleSidebar();
 });
 
 document.addEventListener("click", e => {
   if (sidebar.classList.contains("active") && !sidebar.contains(e.target) && e.target !== filterToggle && e.target !== hamburger) {
-    sidebar.classList.remove("active");
-    mainContent.classList.remove("shifted");
-    filterToggle.classList.remove("hidden");
-    body.classList.remove("filters-open");
+    toggleSidebar();
   }
 });
 
-//Поиск
 movieSearchInput.addEventListener("input", e => {
   currentQuery = e.target.value;
+  localStorage.setItem("query", currentQuery);
   debouncedSearch(1);
 });
 
-//Genres, Countries, Years
+function updateSuggestions(movies) {
+  suggestionsBox.innerHTML = "";
+  if (!currentQuery.trim()) {
+    suggestionsBox.classList.remove("active");
+    return;
+  }
+  movies.slice(0, 6).forEach(movie => {
+    const li = document.createElement("li");
+    li.textContent = movie.title;
+    li.addEventListener("click", () => {
+      movieSearchInput.value = movie.title;
+      currentQuery = movie.title;
+      localStorage.setItem("query", currentQuery);
+      fetchMovies(1);
+      suggestionsBox.classList.remove("active");
+    });
+    suggestionsBox.appendChild(li);
+  });
+  suggestionsBox.classList.add("active");
+}
+
+async function openModal(id) {
+  const res = await fetch(`${BASE_URL}/movie/${id}?api_key=${API_KEY}&language=${currentLang}-RU&append_to_response=videos`);
+  const movie = await res.json();
+
+  const modal = document.createElement("div");
+  modal.className = "modal show";
+  modal.innerHTML = `
+    <div class="modal-content">
+      <span class="close">&times;</span>
+      <div class="modal-body">
+        <img src="${movie.poster_path ? IMG_URL + movie.poster_path : "assets/no-poster.jpg"}" alt="${movie.title}">
+        <div class="modal-info">
+          <h3>${movie.title}</h3>
+          <p>${movie.overview || "Описание отсутствует"}</p>
+          <p><strong>Год:</strong> ${movie.release_date ? movie.release_date.split("-")[0] : "—"}</p>
+          <p><strong>Рейтинг:</strong> ${movie.vote_average}</p>
+          ${movie.videos.results.length ? `<button class="trailer-btn">${translations[currentLang].trailer}</button>` : ""}
+        </div>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+
+  modal.querySelector(".close").addEventListener("click", () => modal.remove());
+  modal.addEventListener("click", e => { if (e.target === modal) modal.remove(); });
+
+  const trailerBtn = modal.querySelector(".trailer-btn");
+  if (trailerBtn && movie.videos.results.length) {
+    trailerBtn.addEventListener("click", () => {
+      const trailer = movie.videos.results.find(v => v.site === "YouTube");
+      if (trailer) window.open(`https://www.youtube.com/watch?v=${trailer.key}`, "_blank");
+    });
+  }
+}
+
 async function loadFilters() {
   const genresRes = await fetch(`${BASE_URL}/genre/movie/list?api_key=${API_KEY}&language=ru-RU`);
   const genresData = await genresRes.json();
@@ -369,7 +419,6 @@ async function loadFilters() {
   createDropdown("year", translations[currentLang].year, filtersData.yearList);
 }
 
-//Инициализация
 (async function init() {
   await loadFilters();
   await fetchMovies();
